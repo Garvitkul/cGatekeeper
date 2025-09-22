@@ -1,0 +1,30 @@
+name: 'IaC Cloud Custodian Checks Scan'
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  compliance-scan:
+    name: 'IaC Cloud Custodian Checks Scan'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Checkout Code'
+        uses: actions/checkout@v4
+
+      - name: 'Set up Python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 'Install Cloud Custodian (c7n-left)'
+        run: pip install c7n-left
+
+      - name: 'Run c7n-left Scan'
+        run: |
+          c7n-left run \
+            -p "${{ github.workspace }}/.github/policies/" \
+            -d "${{ github.workspace }}" \
+            --output cli
