@@ -1,0 +1,82 @@
+policies:
+
+  - name: check-tag-policy
+    resource: "terraform.aws*"
+    metadata:
+      category: governance
+      severity: high
+    filters:
+      - taggable
+      - or:
+        - tag:BUID: absent
+        - tag:Label: absent
+        - tag:Owner: absent
+
+  - name: check-efs-encryption
+    resource: terraform.aws_efs
+    metadata:
+      category: [encryption, security]
+      severity: high
+    filters:
+      - type: value
+        key: encrypted
+        value: false
+
+  - name: s3-require-server-side-encryption
+    resource: terraform.aws_s3_bucket
+    metadata:
+      category: encryption
+      severity: high
+    filters:
+      - server_side_encryption_configuration: absent
+
+  - name: s3-versioning-required
+    resource: terraform.aws_s3_bucket
+    metadata:
+      category: resilience
+      severity: medium
+    filters:
+      - versioning:
+          enabled: false
+
+  - name: rds-no-public-access
+    resource: terraform.aws_db_instance
+    metadata:
+      category: network
+      severity: high
+    filters:
+      - publicly_accessible: true
+
+
+  - name: ec2-no-public-ip
+    resource: terraform.aws_instance
+    metadata:
+      category: network
+      severity: medium
+    filters:
+      - associate_public_ip_address: true
+
+  - name: sqs-must-have-kms
+    resource: terraform.aws_sqs_queue
+    metadata:
+      category: encryption
+      severity: medium
+    filters:
+      - kms_master_key_id: absent
+
+  - name: lambda-no-plaintext-secrets-in-env
+    resource: terraform.aws_lambda_function
+    metadata:
+      category: secrets
+      severity: high
+    # use a value filter to detect env var keys/values that look like secrets
+    filters:
+      - or:
+        - type: value
+          key: environment.variables.* # examines env var values (wildcard)
+          op: regex
+          value: '(?i)(password|passwd|secret|api[_-]?key|token|private_key|access[_-]?key)'
+        - type: value
+          key: environment.variables.* 
+          op: regex
+          value: '^[A-Za-z0-9/+=]{30,}$'  # heuristic for long high-entropy strings
