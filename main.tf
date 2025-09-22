@@ -75,6 +75,7 @@ resource "aws_instance" "good_ec2" {
 # ---- SQS ----
 resource "aws_kms_key" "platform" {
   description = "KMS key for SQS encryption"
+  tags = merge(var.common_tags, { Name = "good-queue" })
 }
 
 resource "aws_sqs_queue" "good_queue" {
